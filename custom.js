@@ -986,14 +986,112 @@
         return results;
       };
       main = function(rowAttrs, rowKeys, colAttrs, colKeys) {
-        var chKey, colAttrHeaders, colAxisHeaders, colKeyHeaders, k, l, len, len1, node, ref, ref1, result, rowAttrHeaders, rowAxisHeaders, rowKeyHeaders, tbody, thead, tr;
+       
+
+        container = createElement("div", "pvtTableContainer");
+
+      //add search elements
+      searchSection = createElement("div", "pvtTableSearchSection");
+      searchSection.appendChild(createElement("span", "", "Search:"));
+      searchInput = createElement("input", "searchInput", globalSearchValue);
+      searchInput.value = globalSearchValue;
+      searchInput.onchange = function(event){
+        globalSearchValue = this.value;
+        refresh();
+      }
+      searchSection.appendChild(searchInput);
+
+
+
+
+      //add pagination elements
+      paginateSection = createElement("div", "pvtTablePageSection");
+      paginateBtnWrapper = createElement("span");
+      paginateFirstBtn = createElement("a", "paginate_button", "First");
+      paginateBtnWrapper.appendChild(paginateFirstBtn);
+      paginatePrevBtn = createElement("a", "paginate_button", "Prev");
+      paginateBtnWrapper.appendChild(paginatePrevBtn);
+      const totalPage = Math.ceil(pivotData.rowKeys.length / rowsPerPage);
+      const totalPageGroup = Math.ceil(totalPage / pagesPerGroup);
+
+      if(curPage > totalPage - 1){
+        curPage = curPageGroup = 0;
+      }
+
+      const startPage = curPageGroup * pagesPerGroup;
+      const endPage = (curPageGroup + 1) * pagesPerGroup > totalPage ? totalPage : (curPageGroup + 1) * pagesPerGroup;
+      
+      
+      if(startPage > 0){
+        groupPrevBtn = createElement("a", "paginate_button", "...");
+        paginateBtnWrapper.appendChild(groupPrevBtn);
+        groupPrevBtn.onclick = function(event){
+          curPageGroup = curPageGroup > 0 ? curPageGroup - 1 : curPageGroup;
+          curPage = curPageGroup * pagesPerGroup;
+          refresh();
+        }
+      }
+      for(var i  = startPage ; i < endPage; i++){
+        var paginateBtn = createElement("a", "paginate_button", i + 1, {
+          "data-dt-idx" : i
+        }, );
+        if(i == curPage){
+          addClass(paginateBtn, "current");
+        }
+        paginateBtn.onclick = function(event) {
+          curPage = Number(this.getAttribute("data-dt-idx"));
+          refresh();
+        };
+        paginateBtnWrapper.appendChild(paginateBtn);
+      }
+      if(endPage < totalPage){
+        groupNextBtn = createElement("a", "paginate_button", "...");
+        paginateBtnWrapper.appendChild(groupNextBtn);
+        groupNextBtn.onclick = function(event){
+          curPageGroup = curPageGroup < totalPageGroup - 1 ? curPageGroup + 1 : curPageGroup;
+          curPage = curPageGroup * pagesPerGroup;
+          refresh();
+        }
+      }
+      paginateNextBtn = createElement("a", "paginate_button", "Next");
+      paginateBtnWrapper.appendChild(paginateNextBtn);
+      paginateLastBtn = createElement("a", "paginate_button", "Last");
+      paginateBtnWrapper.appendChild(paginateLastBtn);
+
+      paginateFirstBtn.onclick = function(event){
+        curPage = 0;
+        adjustPagination();
+      }
+      paginatePrevBtn.onclick = function(event){
+        curPage = curPage > 0 ? curPage - 1 : curPage;
+        adjustPagination(); 
+      }
+      paginateNextBtn.onclick = function(event){
+        curPage = curPage < totalPage - 1 ? curPage + 1 : curPage;
+        adjustPagination();
+      }
+      paginateLastBtn.onclick = function(event){
+        curPage = totalPage - 1;
+        adjustPagination();
+      }
+
+
+      paginateSection.appendChild(paginateBtnWrapper);
+
+      //pivot table
+      pivotData.rowKeys = pivotData.rowKeys.slice(curPage * rowsPerPage, ( curPage + 1 ) * rowsPerPage);
+      // pivotData.input = pivotData.input.slice(curPage * rowsPerPage, ( curPage + 1 ) * rowsPerPage);
+
+     
+
+       var chKey, colAttrHeaders, colAxisHeaders, colKeyHeaders, k, l, len, len1, node, ref, ref1, result, rowAttrHeaders, rowAxisHeaders, rowKeyHeaders, tbody, thead, tr;
         rowAttrHeaders = [];
         colAttrHeaders = [];
         if (colAttrs.length !== 0 && colKeys.length !== 0) {
           colKeyHeaders = processKeys(colKeys, "pvtColLabel");
         }
         if (rowAttrs.length !== 0 && rowKeys.length !== 0) {
-          rowKeyHeaders = processKeys(rowKeys, "pvtRowLabel");
+          rowKeyHeaders = processKeys(pivotData.rowKeys, "pvtRowLabel");
         }
         result = createElement("table", "pvtTable", null, {
           style: "display: none;"
@@ -1039,7 +1137,17 @@
         result.setAttribute("data-numrows", rowKeys.length);
         result.setAttribute("data-numcols", colKeys.length);
         result.style.display = "";
-        return result;
+
+         // pivotTable = $.pivotUtilities.renderers["Table"](pivotData, opts);
+
+      //append all children to container
+      container.appendChild(searchSection);
+      pivotTableWrapper = createElement("div", "pvtTableWrapper");
+      pivotTableWrapper.appendChild(result);
+      container.appendChild(pivotTableWrapper);
+      container.appendChild(paginateSection);
+
+      return container;
       };
 
       refresh = function(){
@@ -1050,7 +1158,7 @@
         curPageGroup = Math.floor(curPage / pagesPerGroup);
         refresh();
       }
-      // return main(rowAttrs, rowKeys, colAttrs, colKeys);
+      return main(rowAttrs, rowKeys, colAttrs, colKeys);
 
       //set data
       // pivotData.rowKeys = Object.values(pivotData._rowKeys);
