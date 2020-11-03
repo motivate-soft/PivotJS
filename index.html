@@ -1,57 +1,63 @@
-
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Customized Pivot Table</title>
-        <!-- external libs from cdnjs -->
-        <script type="text/javascript" src="jquery.min.js"></script>
-        <script type="text/javascript" src="jquery-ui.min.js"></script>
+<html >
+<head>
+    <title>Customized Pivot Table</title>
+    <meta charset="utf-8"/>
+    
+    <!-- external libs from cdnjs -->
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="jquery-ui.min.js"></script>
 
-        <!-- PivotTable.js libs from ../dist -->
-        <script type="text/javascript" src="pivot.min.js"></script>
-        <link rel="stylesheet" type="text/css" href="pivot.min.css">
+    <!-- PivotTable.js libs from ../dist -->
+    <script type="text/javascript" src="pivot.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="pivot.min.css">
 
-        
-        <script type="text/javascript" src="custom.js"></script>
-        <link rel="stylesheet" type="text/css" href="custom.css">
 
-        <!-- optional: mobile support with jqueryui-touch-punch -->
-        <script type="text/javascript" src="jquery.ui.touch-punch.min.js"></script>
+    <script type="text/javascript" src="custom.js"></script>
+    <link rel="stylesheet" type="text/css" href="custom.css">
 
-        <!-- for examples only! script to show code to user -->
-        <script type="text/javascript" src="show_code.js"></script>
-    </head>
-    <body>
+    <!-- optional: mobile support with jqueryui-touch-punch -->
+    <script type="text/javascript" src="jquery.ui.touch-punch.min.js"></script>
+
+    <!-- for examples only! script to show code to user -->
+    <script type="text/javascript" src="show_code.js"></script>
+</head>
+
+<body>
     <script type="text/javascript">
-    // This example demonstrates disabling subtotal feature from a specific level 
+        // This example demonstrates disabling subtotal feature from a specific level 
 
-    $(function() {
-        var dataClass = $.pivotUtilities.CustomPivotData;
-        var renderers = $.pivotUtilities.custom_renderers;
+        $(function () {
+            var dataClass = $.pivotUtilities.CustomPivotData;
+            var renderers = $.pivotUtilities.custom_renderers;
 
-        $.getJSON("mps.json", function(mps) {
-            $("#output").pivotUI(mps, {
-                dataClass: dataClass,
-                rows: ["Gender", "Party", "Province"],
-                cols: ["Age", "Name"],
-                renderers: renderers,
-                rendererName: "Table With Pagination",
-                rendererOptions: {
-                    rowSubtotalDisplay: {
-                        disableFrom: 1
-                    },
-                    colSubtotalDisplay: {
-                        disableFrom: 0
+            $.getJSON("mps.json", function (mps) {
+                $("#output").pivotUI(mps, {
+                    dataClass: dataClass,
+                    rows: ["Gender", "Party", "Province"],
+                    cols: ["Age", "Name"],
+                    renderers: renderers,
+                    rendererName: "Table With Pagination",
+                    rendererOptions: {
+                        rowSubtotalDisplay: {
+                            disableFrom: 1
+                        },
+                        colSubtotalDisplay: {
+                            disableFrom: 0
+                        }
                     }
-                }
+                });
             });
         });
-    });
     </script>
+
+
+    
     <p></p>
-    <h2>Customized Pivot Table with Pagination Function</h2>
+    <h2>Customized Pivot Table with Pagination, Global Search and Column Sort Function</h2>
     <p></p>
-    <div id="output" style="margin: 30px;"></div>
+    <div id="output" class="sticky" style="margin: 30px;"></div>
     <p></p>
-     </body>
+</body>
+
 </html>

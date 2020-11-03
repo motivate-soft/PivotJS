@@ -1,16 +1,23 @@
-(function() {
+(function () {
   var callWithJQuery,
-    extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    extend = function (child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty,
     slice = [].slice;
 
   var rowsPerPage = 10;
-  var curPage = 0;
-  var pagesPerGroup = 5;
-  var curPageGroup = 0;
+  var curPage = 1;
   var globalSearchValue = "";
+  var sortInfo = {
+    colIndex: -1,
+    colKey: '',
+    direction: 0
+    // 0: NORMAL
+    // -1: DESC
+    // 1: ASC
+  }
 
-  callWithJQuery = function(pivotModule) {
+
+  callWithJQuery = function (pivotModule) {
     if (typeof exports === "object" && typeof module === "object") {
       return pivotModule(require("jquery"));
     } else if (typeof define === "function" && define.amd) {
@@ -20,9 +27,9 @@
     }
   };
 
-  callWithJQuery(function($) {
+  callWithJQuery(function ($) {
     var CustomPivotData, SubtotalRenderer, aggregatorTemplates, subtotalAggregatorTemplates, usFmtPct;
-    CustomPivotData = (function(superClass) {
+    CustomPivotData = (function (superClass) {
       var processKey;
 
       extend(CustomPivotData, superClass);
@@ -31,7 +38,7 @@
         CustomPivotData.__super__.constructor.call(this, input, opts);
       }
 
-      processKey = function(record, totals, keys, attrs, getAggregator) {
+      processKey = function (record, totals, keys, attrs, getAggregator) {
         var addKey, attr, flatKey, k, key, len, ref;
         key = [];
         addKey = false;
@@ -51,19 +58,19 @@
         return key;
       };
 
-      CustomPivotData.prototype.processRecord = function(record) {
-        
+      CustomPivotData.prototype.processRecord = function (record) {
+
         var colKey, fColKey, fRowKey, flatColKey, flatRowKey, i, j, k, m, n, ref, results, rowKey;
         rowKey = [];
         colKey = [];
         this.allTotal.push(record);
-        rowKey = processKey(record, this.rowTotals, this.rowKeys, this.rowAttrs, (function(_this) {
-          return function(key) {
+        rowKey = processKey(record, this.rowTotals, this.rowKeys, this.rowAttrs, (function (_this) {
+          return function (key) {
             return _this.aggregator(_this, key, []);
           };
         })(this));
-        colKey = processKey(record, this.colTotals, this.colKeys, this.colAttrs, (function(_this) {
-          return function(key) {
+        colKey = processKey(record, this.colTotals, this.colKeys, this.colAttrs, (function (_this) {
+          return function (key) {
             return _this.aggregator(_this, [], key);
           };
         })(this));
@@ -80,7 +87,7 @@
           if (!this.tree[flatRowKey]) {
             this.tree[flatRowKey] = {};
           }
-          results.push((function() {
+          results.push((function () {
             var l, ref1, results1;
             results1 = [];
             for (j = l = 0, ref1 = n; 0 <= ref1 ? l <= ref1 : l >= ref1; j = 0 <= ref1 ? ++l : --l) {
@@ -95,18 +102,63 @@
             return results1;
           }).call(this));
         }
-        
+
+        //global search logic
+        const value = this.tree[flatRowKey][flatColKey].value();
+
+        if (this._rowKeys == undefined) {
+          this._rowKeys = {};
+        }
+        if (globalSearchValue == "" || value == globalSearchValue) {
+          if (!this._rowKeys[flatRowKey]) {
+            this._rowKeys[flatRowKey] = rowKey;
+          }
+        }
+        this.rowKeys = Object.values(this._rowKeys);
+
+
+        //column sort logic
+        if (this.input[this.input.length - 1] === record && sortInfo.colIndex >= 0 && sortInfo.direction != 0) {
+          var f = [], d, a = sortInfo.direction, c = sortInfo.colIndex;
+          b = this;
+          b.sorted = !1;
+          var h = b.getRowKeys()
+            , e = b.getColKeys();
+          if(sortInfo.colKey !== JSON.stringify(e[c])){
+            sortInfo.colIndex = -1;
+            sortInfo.direction = 0;
+            sortInfo.colKey = null;
+            return;
+          }
+          for (d in h) {
+            var p = h[d];
+            var n = null != c ? e[c] : [];
+            n = b.getAggregator(p, n);
+            f.push({
+              val: n.value(),
+              key: p
+            })
+          }
+          f.sort(function (b, c) {
+            return a * $.pivotUtilities.naturalSort(b.val, c.val)
+          });
+          b.rowKeys = [];
+          for (d = 0; d < f.length; d++)
+            b.rowKeys.push(f[d].key);
+          b.sorted = !0
+        }
+
         return results;
       };
 
       return CustomPivotData;
 
     })($.pivotUtilities.PivotData);
-    
+
     $.pivotUtilities.CustomPivotData = CustomPivotData;
 
 
-    SubtotalRenderer = function(pivotData, opts) {
+    SubtotalRenderer = function (pivotData, opts) {
       var addClass, adjustAxisHeader, allTotal, arrowCollapsed, arrowExpanded, buildAxisHeader, buildColAxisHeaders, buildColHeader, buildColTotals, buildColTotalsHeader, buildGrandTotal, buildRowAxisHeaders, buildRowHeader, buildRowTotalsHeader, buildValues, classColCollapsed, classColExpanded, classColHide, classColShow, classCollapsed, classExpanded, classRowCollapsed, classRowExpanded, classRowHide, classRowShow, clickStatusCollapsed, clickStatusExpanded, colAttrs, colKeys, colTotals, collapseAxis, collapseAxisHeaders, collapseChildCol, collapseChildRow, collapseCol, collapseHiddenColSubtotal, collapseRow, collapseShowColSubtotal, collapseShowRowSubtotal, createElement, defaults, expandAxis, expandChildCol, expandChildRow, expandCol, expandHideColSubtotal, expandHideRowSubtotal, expandRow, expandShowColSubtotal, expandShowRowSubtotal, getHeaderText, getTableEventHandlers, hasClass, hideChildCol, hideChildRow, main, processKeys, removeClass, replaceClass, rowAttrs, rowKeys, rowTotals, setAttributes, showChildCol, showChildRow, tree;
       defaults = {
         table: {
@@ -155,6 +207,10 @@
       colAttrs = pivotData.colAttrs;
       rowAttrs = pivotData.rowAttrs;
       rowKeys = pivotData.getRowKeys();
+      if (rowKeys.length <= (curPage - 1) * rowsPerPage) {
+        curPage = 1;
+      }
+      rowKeys = rowKeys.slice((curPage - 1) * rowsPerPage, curPage * rowsPerPage);
       colKeys = pivotData.getColKeys();
       tree = pivotData.tree;
       rowTotals = pivotData.rowTotals;
@@ -174,12 +230,12 @@
       classColCollapsed = "colcollapsed";
       arrowExpanded = opts.arrowExpanded;
       arrowCollapsed = opts.arrowCollapsed;
-      hasClass = function(element, className) {
+      hasClass = function (element, className) {
         var regExp;
         regExp = new RegExp("(?:^|\\s)" + className + "(?!\\S)", "g");
         return element.className.match(regExp) !== null;
       };
-      removeClass = function(element, className) {
+      removeClass = function (element, className) {
         var k, len, name, ref, regExp, results;
         ref = className.split(" ");
         results = [];
@@ -190,7 +246,7 @@
         }
         return results;
       };
-      addClass = function(element, className) {
+      addClass = function (element, className) {
         var k, len, name, ref, results;
         ref = className.split(" ");
         results = [];
@@ -204,11 +260,11 @@
         }
         return results;
       };
-      replaceClass = function(element, replaceClassName, byClassName) {
+      replaceClass = function (element, replaceClassName, byClassName) {
         removeClass(element, replaceClassName);
         return addClass(element, byClassName);
       };
-      createElement = function(elementType, className, textContent, attributes, eventHandlers) {
+      createElement = function (elementType, className, textContent, attributes, eventHandlers) {
         var attr, e, event, handler, val;
         e = document.createElement(elementType);
         if (className != null) {
@@ -233,7 +289,7 @@
         }
         return e;
       };
-      setAttributes = function(e, attrs) {
+      setAttributes = function (e, attrs) {
         var a, results, v;
         results = [];
         for (a in attrs) {
@@ -243,18 +299,18 @@
         }
         return results;
       };
-      processKeys = function(keysArr, className, opts) {
+      processKeys = function (keysArr, className, opts) {
         var headers, lastIdx, row;
         lastIdx = keysArr[0].length - 1;
         headers = {
           children: []
         };
         row = 0;
-        keysArr.reduce((function(_this) {
-          return function(val0, k0) {
+        keysArr.reduce((function (_this) {
+          return function (val0, k0) {
             var col;
             col = 0;
-            k0.reduce(function(acc, curVal, curIdx, arr) {
+            k0.reduce(function (acc, curVal, curIdx, arr) {
               var i, k, key, node, ref;
               if (!acc[curVal]) {
                 key = k0.slice(0, col + 1);
@@ -300,7 +356,7 @@
         })(this), headers);
         return headers;
       };
-      buildAxisHeader = function(axisHeaders, col, attrs, opts) {
+      buildAxisHeader = function (axisHeaders, col, attrs, opts) {
         var ah, arrow, hClass;
         ah = {
           text: attrs[col],
@@ -323,7 +379,7 @@
         }
         ah.th = createElement("th", "pvtAxisLabel " + hClass, "" + arrow + ah.text);
         if (col < attrs.length - 1 && col < opts.disableFrom && !opts.disableExpandCollapse) {
-          ah.th.onclick = function(event) {
+          ah.th.onclick = function (event) {
             event = event || window.event;
             return ah.onClick(axisHeaders, col, attrs, opts);
           };
@@ -331,7 +387,7 @@
         axisHeaders.ah.push(ah);
         return ah;
       };
-      buildColAxisHeaders = function(thead, rowAttrs, colAttrs, opts) {
+      buildColAxisHeaders = function (thead, rowAttrs, colAttrs, opts) {
         var ah, attr, axisHeaders, col, k, len;
         axisHeaders = {
           collapseAttrHeader: collapseCol,
@@ -353,7 +409,7 @@
         }
         return axisHeaders;
       };
-      buildRowAxisHeaders = function(thead, rowAttrs, colAttrs, opts) {
+      buildRowAxisHeaders = function (thead, rowAttrs, colAttrs, opts) {
         var ah, axisHeaders, col, k, ref, th;
         axisHeaders = {
           collapseAttrHeader: collapseRow,
@@ -372,7 +428,7 @@
         thead.appendChild(axisHeaders.tr);
         return axisHeaders;
       };
-      getHeaderText = function(h, attrs, opts) {
+      getHeaderText = function (h, attrs, opts) {
         var arrow;
         arrow = " " + arrowExpanded + " ";
         if (h.col === attrs.length - 1 || h.col >= opts.disableFrom || opts.disableExpandCollapse || h.children.length === 0) {
@@ -380,7 +436,7 @@
         }
         return "" + arrow + h.text;
       };
-      buildColHeader = function(axisHeaders, attrHeaders, h, rowAttrs, colAttrs, node, opts) {
+      buildColHeader = function (axisHeaders, attrHeaders, h, rowAttrs, colAttrs, node, opts) {
         var ah, chKey, k, len, ref, ref1;
         ref = h.children;
         for (k = 0, len = ref.length; k < len; k++) {
@@ -391,13 +447,38 @@
         ah.attrHeaders.push(h);
         h.node = node.counter;
         h.onClick = collapseCol;
-        addClass(h.th, classColShow + " col" + h.row + " colcol" + h.col + " " + classColExpanded);
+        // addClass(h.th, classColShow + " col" + h.row + " colcol" + h.col + " " + classColExpanded);
+        addClass(h.th, classColShow + " col" + h.row + " colcol" + h.col);
         h.th.setAttribute("data-colnode", h.node);
         if (h.children.length !== 0) {
           h.th.colSpan = h.childrenSpan;
         }
         if (h.children.length === 0 && rowAttrs.length !== 0) {
           h.th.rowSpan = 2;
+          h.th.setAttribute("key-index", h.row);
+          addClass(h.th, "pvtSortable");
+          if(h.row == sortInfo.colIndex && JSON.stringify(colKeys[h.row]) === sortInfo.colKey){
+            addClass(h.th, sortInfo.direction == -1 ? "pvtSortDesc" : sortInfo.direction == 1 ? "pvtSortAsc" : "");
+          }
+
+          b = pivotData;
+          h.th.onclick = function (event) {
+            curPage = curPageGroup = 0;
+            sortInfo.colIndex = $(this).attr('key-index');
+            if (sortInfo.colIndex < 0) {
+              return;
+            }
+            sortInfo.colKey = JSON.stringify(colKeys[sortInfo.colIndex]);
+            
+            if (hasClass(this, "pvtSortDesc")) {
+              sortInfo.direction = 1;
+            } else if (hasClass(this, "pvtSortAsc")) {
+              sortInfo.direction = 0;
+            } else {
+              sortInfo.direction = -1;
+            }
+            refresh();
+          };
         }
         h.th.textContent = getHeaderText(h, colAttrs, opts.colSubtotalDisplay);
         if (h.children.length !== 0 && h.col < opts.colSubtotalDisplay.disableFrom) {
@@ -406,12 +487,12 @@
           if (!opts.colSubtotalDisplay.hideOnExpand) {
             h.th.colSpan++;
           }
-          if (!opts.colSubtotalDisplay.disableExpandCollapse) {
-            h.th.onclick = function(event) {
-              event = event || window.event;
-              return h.onClick(axisHeaders, h, opts.colSubtotalDisplay);
-            };
-          }
+          // if (!opts.colSubtotalDisplay.disableExpandCollapse) {
+          //   h.th.onclick = function (event) {
+          //     event = event || window.event;
+          //     return h.onClick(axisHeaders, h, opts.colSubtotalDisplay);
+          //   };
+          // }
           h.sTh = createElement("th", "pvtColLabelFiller " + classColShow + " col" + h.row + " colcol" + h.col + " " + classColExpanded);
           h.sTh.setAttribute("data-colnode", h.node);
           h.sTh.rowSpan = colAttrs.length - h.col;
@@ -429,14 +510,14 @@
         attrHeaders.push(h);
         return node.counter++;
       };
-      buildRowTotalsHeader = function(tr, rowAttrs, colAttrs) {
+      buildRowTotalsHeader = function (tr, rowAttrs, colAttrs) {
         var th;
         th = createElement("th", "pvtTotalLabel rowTotal", opts.localeStrings.totals, {
           rowspan: colAttrs.length === 0 ? 1 : colAttrs.length + (rowAttrs.length === 0 ? 0 : 1)
         });
         return tr.appendChild(th);
       };
-      buildRowHeader = function(tbody, axisHeaders, attrHeaders, h, rowAttrs, colAttrs, node, opts) {
+      buildRowHeader = function (tbody, axisHeaders, attrHeaders, h, rowAttrs, colAttrs, node, opts) {
         var ah, chKey, firstChild, k, len, ref, ref1;
         ref = h.children;
         for (k = 0, len = ref.length; k < len; k++) {
@@ -470,12 +551,12 @@
           ++ah.expandedCount;
           ++ah.expandables;
           if (!opts.rowSubtotalDisplay.disableExpandCollapse) {
-            h.th.onclick = function(event) {
+            h.th.onclick = function (event) {
               event = event || window.event;
               return h.onClick(axisHeaders, h, opts.rowSubtotalDisplay);
             };
           }
-          h.sTh = createElement("th", "pvtRowLabelFiller row" + h.row + " rowcol" + h.col + " " + classRowExpanded + " " + classRowShow);
+          h.sTh = createElement("th", "pvtRowLabel row" + h.row + " rowcol" + h.col + " " + classRowExpanded + " " + classRowShow);
           if (opts.rowSubtotalDisplay.hideOnExpand) {
             replaceClass(h.sTh, classRowShow, classRowHide);
           }
@@ -500,7 +581,7 @@
         attrHeaders.push(h);
         return node.counter++;
       };
-      getTableEventHandlers = function(value, rowKey, colKey, rowAttrs, colAttrs, opts) {
+      getTableEventHandlers = function (value, rowKey, colKey, rowAttrs, colAttrs, opts) {
         var attr, event, eventHandlers, filters, handler, i, ref, ref1;
         if (!((ref = opts.table) != null ? ref.eventHandlers : void 0)) {
           return;
@@ -525,13 +606,13 @@
               filters[attr] = rowKey[i];
             }
           }
-          eventHandlers[event] = function(e) {
+          eventHandlers[event] = function (e) {
             return handler(e, value, filters, pivotData);
           };
         }
         return eventHandlers;
       };
-      buildValues = function(tbody, colAttrHeaders, rowAttrHeaders, rowAttrs, colAttrs, opts) {
+      buildValues = function (tbody, colAttrHeaders, rowAttrHeaders, rowAttrs, colAttrs, opts) {
         var aggregator, ch, cls, k, l, len, len1, rCls, ref, results, rh, td, totalAggregator, tr, val;
         results = [];
         for (k = 0, len = rowAttrHeaders.length; k < len; k++) {
@@ -553,10 +634,10 @@
               continue;
             }
             aggregator = (ref = tree[rh.flatKey][ch.flatKey]) != null ? ref : {
-              value: (function() {
+              value: (function () {
                 return null;
               }),
-              format: function() {
+              format: function () {
                 return "";
               }
             };
@@ -587,7 +668,7 @@
         }
         return results;
       };
-      buildColTotalsHeader = function(rowAttrs, colAttrs) {
+      buildColTotalsHeader = function (rowAttrs, colAttrs) {
         var colspan, th, tr;
         tr = createElement("tr");
         colspan = rowAttrs.length + (colAttrs.length === 0 ? 0 : 1);
@@ -597,7 +678,7 @@
         tr.appendChild(th);
         return tr;
       };
-      buildColTotals = function(tr, attrHeaders, rowAttrs, colAttrs, opts) {
+      buildColTotals = function (tr, attrHeaders, rowAttrs, colAttrs, opts) {
         var clsNames, h, k, len, results, td, totalAggregator, val;
         results = [];
         for (k = 0, len = attrHeaders.length; k < len; k++) {
@@ -623,7 +704,7 @@
         }
         return results;
       };
-      buildGrandTotal = function(tbody, tr, rowAttrs, colAttrs, opts) {
+      buildGrandTotal = function (tbody, tr, rowAttrs, colAttrs, opts) {
         var td, totalAggregator, val;
         totalAggregator = allTotal;
         val = totalAggregator.value();
@@ -633,7 +714,7 @@
         tr.appendChild(td);
         return tbody.appendChild(tr);
       };
-      collapseAxisHeaders = function(axisHeaders, col, opts) {
+      collapseAxisHeaders = function (axisHeaders, col, opts) {
         var ah, collapsible, i, k, ref, ref1, results;
         collapsible = Math.min(axisHeaders.ah.length - 2, opts.disableFrom - 1);
         if (col > collapsible) {
@@ -649,7 +730,7 @@
         }
         return results;
       };
-      adjustAxisHeader = function(axisHeaders, col, opts) {
+      adjustAxisHeader = function (axisHeaders, col, opts) {
         var ah;
         ah = axisHeaders.ah[col];
         if (ah.expandedCount === 0) {
@@ -661,24 +742,24 @@
           return ah.onClick = collapseAxis;
         }
       };
-      hideChildCol = function(ch) {
+      hideChildCol = function (ch) {
         return $(ch.th).closest('table.pvtTable').find("tbody tr td[data-colnode=\"" + ch.node + "\"], th[data-colnode=\"" + ch.node + "\"]").removeClass(classColShow).addClass(classColHide);
       };
-      collapseHiddenColSubtotal = function(h, opts) {
+      collapseHiddenColSubtotal = function (h, opts) {
         $(h.th).closest('table.pvtTable').find("tbody tr td[data-colnode=\"" + h.node + "\"], th[data-colnode=\"" + h.node + "\"]").removeClass(classColExpanded).addClass(classColCollapsed);
         if (h.children.length !== 0) {
           h.th.textContent = " " + arrowCollapsed + " " + h.text;
         }
         return h.th.colSpan = 1;
       };
-      collapseShowColSubtotal = function(h, opts) {
+      collapseShowColSubtotal = function (h, opts) {
         $(h.th).closest('table.pvtTable').find("tbody tr td[data-colnode=\"" + h.node + "\"], th[data-colnode=\"" + h.node + "\"]").removeClass(classColExpanded).addClass(classColCollapsed).removeClass(classColHide).addClass(classColShow);
         if (h.children.length !== 0) {
           h.th.textContent = " " + arrowCollapsed + " " + h.text;
         }
         return h.th.colSpan = 1;
       };
-      collapseChildCol = function(ch, h) {
+      collapseChildCol = function (ch, h) {
         var chKey, k, len, ref;
         ref = ch.children;
         for (k = 0, len = ref.length; k < len; k++) {
@@ -689,7 +770,7 @@
         }
         return hideChildCol(ch);
       };
-      collapseCol = function(axisHeaders, h, opts) {
+      collapseCol = function (axisHeaders, h, opts) {
         var chKey, colSpan, k, len, p, ref;
         colSpan = h.th.colSpan - 1;
         ref = h.children;
@@ -716,20 +797,20 @@
         axisHeaders.ah[h.col].expandedCount--;
         return adjustAxisHeader(axisHeaders, h.col, opts);
       };
-      showChildCol = function(ch) {
+      showChildCol = function (ch) {
         return $(ch.th).closest('table.pvtTable').find("tbody tr td[data-colnode=\"" + ch.node + "\"], th[data-colnode=\"" + ch.node + "\"]").removeClass(classColHide).addClass(classColShow);
       };
-      expandHideColSubtotal = function(h) {
+      expandHideColSubtotal = function (h) {
         $(h.th).closest('table.pvtTable').find("tbody tr td[data-colnode=\"" + h.node + "\"], th[data-colnode=\"" + h.node + "\"]").removeClass(classColCollapsed + " " + classColShow).addClass(classColExpanded + " " + classColHide);
         replaceClass(h.th, classColHide, classColShow);
         return h.th.textContent = " " + arrowExpanded + " " + h.text;
       };
-      expandShowColSubtotal = function(h) {
+      expandShowColSubtotal = function (h) {
         $(h.th).closest('table.pvtTable').find("tbody tr td[data-colnode=\"" + h.node + "\"], th[data-colnode=\"" + h.node + "\"]").removeClass(classColCollapsed + " " + classColHide).addClass(classColExpanded + " " + classColShow);
         h.th.colSpan++;
         return h.th.textContent = " " + arrowExpanded + " " + h.text;
       };
-      expandChildCol = function(ch, opts) {
+      expandChildCol = function (ch, opts) {
         var chKey, k, len, ref, results;
         if (ch.children.length !== 0 && opts.hideOnExpand && ch.clickStatus === clickStatusExpanded) {
           replaceClass(ch.th, classColHide, classColShow);
@@ -749,7 +830,7 @@
           return results;
         }
       };
-      expandCol = function(axisHeaders, h, opts) {
+      expandCol = function (axisHeaders, h, opts) {
         var ch, chKey, colSpan, k, len, p, ref;
         if (h.clickStatus === clickStatusExpanded) {
           adjustAxisHeader(axisHeaders, h.col, opts);
@@ -782,7 +863,7 @@
         axisHeaders.ah[h.col].expandedCount++;
         return adjustAxisHeader(axisHeaders, h.col, opts);
       };
-      hideChildRow = function(ch, opts) {
+      hideChildRow = function (ch, opts) {
         var cell, k, l, len, len1, ref, ref1, results;
         ref = ch.tr.querySelectorAll("th, td");
         for (k = 0, len = ref.length; k < len; k++) {
@@ -799,7 +880,7 @@
           return results;
         }
       };
-      collapseShowRowSubtotal = function(h, opts) {
+      collapseShowRowSubtotal = function (h, opts) {
         var cell, k, l, len, len1, ref, ref1, results;
         h.th.textContent = " " + arrowCollapsed + " " + h.text;
         ref = h.tr.querySelectorAll("th, td");
@@ -819,7 +900,7 @@
           return results;
         }
       };
-      collapseChildRow = function(ch, h, opts) {
+      collapseChildRow = function (ch, h, opts) {
         var chKey, k, len, ref;
         ref = ch.children;
         for (k = 0, len = ref.length; k < len; k++) {
@@ -828,7 +909,7 @@
         }
         return hideChildRow(ch, opts);
       };
-      collapseRow = function(axisHeaders, h, opts) {
+      collapseRow = function (axisHeaders, h, opts) {
         var chKey, k, len, ref;
         ref = h.children;
         for (k = 0, len = ref.length; k < len; k++) {
@@ -841,7 +922,7 @@
         axisHeaders.ah[h.col].expandedCount--;
         return adjustAxisHeader(axisHeaders, h.col, opts);
       };
-      showChildRow = function(ch, opts) {
+      showChildRow = function (ch, opts) {
         var cell, k, l, len, len1, ref, ref1, results;
         ref = ch.tr.querySelectorAll("th, td");
         for (k = 0, len = ref.length; k < len; k++) {
@@ -858,7 +939,7 @@
           return results;
         }
       };
-      expandShowRowSubtotal = function(h, opts) {
+      expandShowRowSubtotal = function (h, opts) {
         var cell, k, l, len, len1, ref, ref1, results;
         h.th.textContent = " " + arrowExpanded + " " + h.text;
         ref = h.tr.querySelectorAll("th, td");
@@ -878,7 +959,7 @@
           return results;
         }
       };
-      expandHideRowSubtotal = function(h, opts) {
+      expandHideRowSubtotal = function (h, opts) {
         var cell, k, l, len, len1, ref, ref1, results;
         h.th.textContent = " " + arrowExpanded + " " + h.text;
         ref = h.tr.querySelectorAll("th, td");
@@ -900,7 +981,7 @@
           return results;
         }
       };
-      expandChildRow = function(ch, opts) {
+      expandChildRow = function (ch, opts) {
         var chKey, k, len, ref, results;
         if (ch.children.length !== 0 && opts.hideOnExpand && ch.clickStatus === clickStatusExpanded) {
           replaceClass(ch.th, classRowHide, classRowShow);
@@ -920,7 +1001,7 @@
           return results;
         }
       };
-      expandRow = function(axisHeaders, h, opts) {
+      expandRow = function (axisHeaders, h, opts) {
         var ch, chKey, k, len, ref;
         if (h.clickStatus === clickStatusExpanded) {
           adjustAxisHeader(axisHeaders, h.col, opts);
@@ -944,7 +1025,7 @@
         axisHeaders.ah[h.col].expandedCount++;
         return adjustAxisHeader(axisHeaders, h.col, opts);
       };
-      collapseAxis = function(axisHeaders, col, attrs, opts) {
+      collapseAxis = function (axisHeaders, col, attrs, opts) {
         var collapsible, h, i, k, ref, ref1, results;
         collapsible = Math.min(attrs.length - 2, opts.disableFrom - 1);
         if (col > collapsible) {
@@ -952,7 +1033,7 @@
         }
         results = [];
         for (i = k = ref = collapsible, ref1 = col; k >= ref1; i = k += -1) {
-          results.push((function() {
+          results.push((function () {
             var l, len, ref2, results1;
             ref2 = axisHeaders.ah[i].attrHeaders;
             results1 = [];
@@ -967,12 +1048,12 @@
         }
         return results;
       };
-      expandAxis = function(axisHeaders, col, attrs, opts) {
+      expandAxis = function (axisHeaders, col, attrs, opts) {
         var ah, h, i, k, ref, results;
         ah = axisHeaders.ah[col];
         results = [];
         for (i = k = 0, ref = col; 0 <= ref ? k <= ref : k >= ref; i = 0 <= ref ? ++k : --k) {
-          results.push((function() {
+          results.push((function () {
             var l, len, ref1, results1;
             ref1 = axisHeaders.ah[i].attrHeaders;
             results1 = [];
@@ -985,113 +1066,113 @@
         }
         return results;
       };
-      main = function(rowAttrs, rowKeys, colAttrs, colKeys) {
-       
+      main = function (rowAttrs, rowKeys, colAttrs, colKeys) {
 
         container = createElement("div", "pvtTableContainer");
 
-      //add search elements
-      searchSection = createElement("div", "pvtTableSearchSection");
-      searchSection.appendChild(createElement("span", "", "Search:"));
-      searchInput = createElement("input", "searchInput", globalSearchValue);
-      searchInput.value = globalSearchValue;
-      searchInput.onchange = function(event){
-        globalSearchValue = this.value;
-        refresh();
-      }
-      searchSection.appendChild(searchInput);
-
-
-
-
-      //add pagination elements
-      paginateSection = createElement("div", "pvtTablePageSection");
-      paginateBtnWrapper = createElement("span");
-      paginateFirstBtn = createElement("a", "paginate_button", "First");
-      paginateBtnWrapper.appendChild(paginateFirstBtn);
-      paginatePrevBtn = createElement("a", "paginate_button", "Prev");
-      paginateBtnWrapper.appendChild(paginatePrevBtn);
-      const totalPage = Math.ceil(pivotData.rowKeys.length / rowsPerPage);
-      const totalPageGroup = Math.ceil(totalPage / pagesPerGroup);
-
-      if(curPage > totalPage - 1){
-        curPage = curPageGroup = 0;
-      }
-
-      const startPage = curPageGroup * pagesPerGroup;
-      const endPage = (curPageGroup + 1) * pagesPerGroup > totalPage ? totalPage : (curPageGroup + 1) * pagesPerGroup;
-      
-      
-      if(startPage > 0){
-        groupPrevBtn = createElement("a", "paginate_button", "...");
-        paginateBtnWrapper.appendChild(groupPrevBtn);
-        groupPrevBtn.onclick = function(event){
-          curPageGroup = curPageGroup > 0 ? curPageGroup - 1 : curPageGroup;
-          curPage = curPageGroup * pagesPerGroup;
+        //add search elements
+        searchSection = createElement("div", "pvtTableSearchSection");
+        searchSection.appendChild(createElement("span", "", "Search:"));
+        searchInput = createElement("input", "searchInput", globalSearchValue);
+        searchInput.value = globalSearchValue;
+        searchInput.onchange = function (event) {
+          globalSearchValue = this.value;
           refresh();
         }
-      }
-      for(var i  = startPage ; i < endPage; i++){
-        var paginateBtn = createElement("a", "paginate_button", i + 1, {
-          "data-dt-idx" : i
-        }, );
-        if(i == curPage){
-          addClass(paginateBtn, "current");
+        searchSection.appendChild(searchInput);
+
+        //add pagination elements
+        paginateSection = createElement("div", "pvtTablePageSection");
+        paginateBtnWrapper = createElement("span");
+        
+        paginatePrevBtn = createElement("a", "paginate_button", "Prev");
+        paginateBtnWrapper.appendChild(paginatePrevBtn);
+
+        const totalPage = Math.ceil(pivotData.rowKeys.length / rowsPerPage);
+        
+
+        if (curPage > totalPage) {
+          curPage = 1;
         }
-        paginateBtn.onclick = function(event) {
-          curPage = Number(this.getAttribute("data-dt-idx"));
-          refresh();
-        };
-        paginateBtnWrapper.appendChild(paginateBtn);
-      }
-      if(endPage < totalPage){
-        groupNextBtn = createElement("a", "paginate_button", "...");
-        paginateBtnWrapper.appendChild(groupNextBtn);
-        groupNextBtn.onclick = function(event){
-          curPageGroup = curPageGroup < totalPageGroup - 1 ? curPageGroup + 1 : curPageGroup;
-          curPage = curPageGroup * pagesPerGroup;
-          refresh();
+        console.log(totalPage);
+
+        var pageNumArray = [];
+        // -1 means (...)
+        if(totalPage >= 14){
+          if(curPage >= 8 && curPage <= totalPage - 8){
+              pageNumArray = [1, 2, -1];
+              for(var i = curPage - 3; i < curPage + 4; i++){
+                pageNumArray.push(i);
+              }
+              pageNumArray = pageNumArray.concat([-1, totalPage - 1, totalPage]);
+          }else if(curPage < 8){
+              pageNumArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, -1, totalPage - 1, totalPage];
+          }else{
+              pageNumArray = [1, 2, -1];
+              for(var i = totalPage - 9; i < totalPage + 1; i++){
+                pageNumArray.push(i);
+              }
+          }
+        }else{
+          for(var i = 1; i < totalPage + 1; i++){
+            pageNumArray.push(i);
+          }
         }
-      }
-      paginateNextBtn = createElement("a", "paginate_button", "Next");
-      paginateBtnWrapper.appendChild(paginateNextBtn);
-      paginateLastBtn = createElement("a", "paginate_button", "Last");
-      paginateBtnWrapper.appendChild(paginateLastBtn);
 
-      paginateFirstBtn.onclick = function(event){
-        curPage = 0;
-        adjustPagination();
-      }
-      paginatePrevBtn.onclick = function(event){
-        curPage = curPage > 0 ? curPage - 1 : curPage;
-        adjustPagination(); 
-      }
-      paginateNextBtn.onclick = function(event){
-        curPage = curPage < totalPage - 1 ? curPage + 1 : curPage;
-        adjustPagination();
-      }
-      paginateLastBtn.onclick = function(event){
-        curPage = totalPage - 1;
-        adjustPagination();
-      }
+        for(var i = 0; i < pageNumArray.length; i++){
+          var paginateItem;
+          if(pageNumArray[i] === -1){
+              paginateItem = createElement("span", "paginate_more", "...");
+          }else{
+            paginateItem = createElement("a", "paginate_button", pageNumArray[i], {
+              "data-dt-idx": pageNumArray[i]
+            });
+            if (pageNumArray[i] == curPage) {
+              addClass(paginateItem, "current");
+            }  
+            paginateItem.onclick = function (event) {
+                const pageNum = Number(this.getAttribute("data-dt-idx"));
+                if(pageNum != curPage){
+                  curPage = pageNum;
+                  refresh();
+                }
+            };
+          }
+          paginateBtnWrapper.appendChild(paginateItem);
+        }
+
+        paginateNextBtn = createElement("a", "paginate_button", "Next");
+        paginateBtnWrapper.appendChild(paginateNextBtn);
+
+        
+        paginatePrevBtn.onclick = function (event) {
+          if(curPage > 1){
+            curPage--;
+            refresh();
+          }
+        }
+        paginateNextBtn.onclick = function (event) {
+          if(curPage < totalPage){
+            curPage++;
+            refresh();
+          }
+        }
+
+        paginateSection.appendChild(paginateBtnWrapper);
+
+        //pivot table
+        //pivotData.rowKeys = pivotData.rowKeys.slice(curPage * rowsPerPage, ( curPage + 1 ) * rowsPerPage);
+        // pivotData.input = pivotData.input.slice(curPage * rowsPerPage, ( curPage + 1 ) * rowsPerPage);
 
 
-      paginateSection.appendChild(paginateBtnWrapper);
-
-      //pivot table
-      pivotData.rowKeys = pivotData.rowKeys.slice(curPage * rowsPerPage, ( curPage + 1 ) * rowsPerPage);
-      // pivotData.input = pivotData.input.slice(curPage * rowsPerPage, ( curPage + 1 ) * rowsPerPage);
-
-     
-
-       var chKey, colAttrHeaders, colAxisHeaders, colKeyHeaders, k, l, len, len1, node, ref, ref1, result, rowAttrHeaders, rowAxisHeaders, rowKeyHeaders, tbody, thead, tr;
+        var chKey, colAttrHeaders, colAxisHeaders, colKeyHeaders, k, l, len, len1, node, ref, ref1, result, rowAttrHeaders, rowAxisHeaders, rowKeyHeaders, tbody, thead, tr;
         rowAttrHeaders = [];
         colAttrHeaders = [];
         if (colAttrs.length !== 0 && colKeys.length !== 0) {
           colKeyHeaders = processKeys(colKeys, "pvtColLabel");
         }
         if (rowAttrs.length !== 0 && rowKeys.length !== 0) {
-          rowKeyHeaders = processKeys(pivotData.rowKeys, "pvtRowLabel");
+          rowKeyHeaders = processKeys(rowKeys, "pvtRowLabel");
         }
         result = createElement("table", "pvtTable", null, {
           style: "display: none;"
@@ -1112,7 +1193,7 @@
         }
         tbody = createElement("tbody");
         result.appendChild(tbody);
-        if (rowAttrs.length !== 0) {
+        if (rowAttrs.length !== 0 && rowKeys.length !== 0) {
           rowAxisHeaders = buildRowAxisHeaders(thead, rowAttrs, colAttrs, opts);
           if (colAttrs.length === 0) {
             buildRowTotalsHeader(rowAxisHeaders.tr, rowAttrs, colAttrs);
@@ -1138,155 +1219,52 @@
         result.setAttribute("data-numcols", colKeys.length);
         result.style.display = "";
 
-         // pivotTable = $.pivotUtilities.renderers["Table"](pivotData, opts);
 
-      //append all children to container
-      container.appendChild(searchSection);
-      pivotTableWrapper = createElement("div", "pvtTableWrapper");
-      pivotTableWrapper.appendChild(result);
-      container.appendChild(pivotTableWrapper);
-      container.appendChild(paginateSection);
 
-      return container;
+        // pivotTable = $.pivotUtilities.renderers["Table"](pivotData, opts);
+
+        //append all children to container
+        container.appendChild(searchSection);
+        pivotTableWrapper = createElement("div", "pvtTableWrapper");
+        pivotTableWrapper.appendChild(result);
+        container.appendChild(pivotTableWrapper);
+        if (rowKeys.length > 0) {
+          container.appendChild(paginateSection);
+        }
+
+
+        return container;
       };
 
-      refresh = function(){
+      refresh = function () {
         $(".pvtRenderer").change();
       }
 
-      adjustPagination = function(){
+      adjustPagination = function () {
         curPageGroup = Math.floor(curPage / pagesPerGroup);
         refresh();
       }
       return main(rowAttrs, rowKeys, colAttrs, colKeys);
 
-      //set data
-      // pivotData.rowKeys = Object.values(pivotData._rowKeys);
-      // pivotData.rowKeys = pivotData._sortedRowKeys;
-
-
-      container = createElement("div", "pvtTableContainer");
-
-      //add search elements
-      searchSection = createElement("div", "pvtTableSearchSection");
-      searchSection.appendChild(createElement("span", "", "Search:"));
-      searchInput = createElement("input", "searchInput", globalSearchValue);
-      searchInput.value = globalSearchValue;
-      searchInput.onchange = function(event){
-        globalSearchValue = this.value;
-        refresh();
-      }
-      searchSection.appendChild(searchInput);
-
-
-
-
-      //add pagination elements
-      paginateSection = createElement("div", "pvtTablePageSection");
-      paginateBtnWrapper = createElement("span");
-      paginateFirstBtn = createElement("a", "paginate_button", "First");
-      paginateBtnWrapper.appendChild(paginateFirstBtn);
-      paginatePrevBtn = createElement("a", "paginate_button", "Prev");
-      paginateBtnWrapper.appendChild(paginatePrevBtn);
-      const totalPage = Math.ceil(pivotData.rowKeys.length / rowsPerPage);
-      const totalPageGroup = Math.ceil(totalPage / pagesPerGroup);
-
-      if(curPage > totalPage - 1){
-        curPage = curPageGroup = 0;
-      }
-
-      const startPage = curPageGroup * pagesPerGroup;
-      const endPage = (curPageGroup + 1) * pagesPerGroup > totalPage ? totalPage : (curPageGroup + 1) * pagesPerGroup;
-      
-      
-      if(startPage > 0){
-        groupPrevBtn = createElement("a", "paginate_button", "...");
-        paginateBtnWrapper.appendChild(groupPrevBtn);
-        groupPrevBtn.onclick = function(event){
-          curPageGroup = curPageGroup > 0 ? curPageGroup - 1 : curPageGroup;
-          curPage = curPageGroup * pagesPerGroup;
-          refresh();
-        }
-      }
-      for(var i  = startPage ; i < endPage; i++){
-        var paginateBtn = createElement("a", "paginate_button", i + 1, {
-          "data-dt-idx" : i
-        }, );
-        if(i == curPage){
-          addClass(paginateBtn, "current");
-        }
-        paginateBtn.onclick = function(event) {
-          curPage = Number(this.getAttribute("data-dt-idx"));
-          refresh();
-        };
-        paginateBtnWrapper.appendChild(paginateBtn);
-      }
-      if(endPage < totalPage){
-        groupNextBtn = createElement("a", "paginate_button", "...");
-        paginateBtnWrapper.appendChild(groupNextBtn);
-        groupNextBtn.onclick = function(event){
-          curPageGroup = curPageGroup < totalPageGroup - 1 ? curPageGroup + 1 : curPageGroup;
-          curPage = curPageGroup * pagesPerGroup;
-          refresh();
-        }
-      }
-      paginateNextBtn = createElement("a", "paginate_button", "Next");
-      paginateBtnWrapper.appendChild(paginateNextBtn);
-      paginateLastBtn = createElement("a", "paginate_button", "Last");
-      paginateBtnWrapper.appendChild(paginateLastBtn);
-
-      paginateFirstBtn.onclick = function(event){
-        curPage = 0;
-        adjustPagination();
-      }
-      paginatePrevBtn.onclick = function(event){
-        curPage = curPage > 0 ? curPage - 1 : curPage;
-        adjustPagination(); 
-      }
-      paginateNextBtn.onclick = function(event){
-        curPage = curPage < totalPage - 1 ? curPage + 1 : curPage;
-        adjustPagination();
-      }
-      paginateLastBtn.onclick = function(event){
-        curPage = totalPage - 1;
-        adjustPagination();
-      }
-
-
-      paginateSection.appendChild(paginateBtnWrapper);
-
-      //pivot table
-      pivotData.rowKeys = pivotData.rowKeys.slice(curPage * rowsPerPage, ( curPage + 1 ) * rowsPerPage);
-      // pivotData.input = pivotData.input.slice(curPage * rowsPerPage, ( curPage + 1 ) * rowsPerPage);
-
-      pivotTable = $.pivotUtilities.renderers["Table"](pivotData, opts);
-
-      //append all children to container
-      container.appendChild(searchSection);
-      pivotTableWrapper = createElement("div", "pvtTableWrapper");
-      pivotTableWrapper.appendChild(pivotTable);
-      container.appendChild(pivotTableWrapper);
-      container.appendChild(paginateSection);
-
-      return container;
+     
     };
     $.pivotUtilities.custom_renderers = {
-      "Table With Subtotal": function(pvtData, opts) {
+      "Table With Subtotal": function (pvtData, opts) {
         return SubtotalRenderer(pvtData, opts);
       },
-      "Table With Pagination": function(pvtData, opts) {
+      "Table With Pagination": function (pvtData, opts) {
         return SubtotalRenderer(pvtData, opts);
       },
-      "Table With Subtotal Bar Chart": function(pvtData, opts) {
+      "Table With Subtotal Bar Chart": function (pvtData, opts) {
         return $(SubtotalRenderer(pvtData, opts)).barchart();
       },
-      "Table With Subtotal Heatmap": function(pvtData, opts) {
+      "Table With Subtotal Heatmap": function (pvtData, opts) {
         return $(SubtotalRenderer(pvtData, opts)).heatmap("heatmap", opts);
       },
-      "Table With Subtotal Row Heatmap": function(pvtData, opts) {
+      "Table With Subtotal Row Heatmap": function (pvtData, opts) {
         return $(SubtotalRenderer(pvtData, opts)).heatmap("rowheatmap", opts);
       },
-      "Table With Subtotal Col Heatmap": function(pvtData, opts) {
+      "Table With Subtotal Col Heatmap": function (pvtData, opts) {
         return $(SubtotalRenderer(pvtData, opts)).heatmap("colheatmap", opts);
       }
     };
@@ -1297,17 +1275,17 @@
     });
     aggregatorTemplates = $.pivotUtilities.aggregatorTemplates;
     subtotalAggregatorTemplates = {
-      fractionOf: function(wrapped, type, formatter) {
+      fractionOf: function (wrapped, type, formatter) {
         if (type == null) {
           type = "row";
         }
         if (formatter == null) {
           formatter = usFmtPct;
         }
-        return function() {
+        return function () {
           var x;
           x = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-          return function(data, rowKey, colKey) {
+          return function (data, rowKey, colKey) {
             if (typeof rowKey === "undefined") {
               rowKey = [];
             }
@@ -1320,11 +1298,11 @@
                 col: [[], colKey.slice(0, -1)]
               }[type],
               inner: wrapped.apply(null, x)(data, rowKey, colKey),
-              push: function(record) {
+              push: function (record) {
                 return this.inner.push(record);
               },
               format: formatter,
-              value: function() {
+              value: function () {
                 return this.inner.value() / data.getAggregator.apply(data, this.selector).inner.value();
               },
               numInputs: wrapped.apply(null, x)().numInputs
@@ -1334,7 +1312,7 @@
       }
     };
     $.pivotUtilities.subtotalAggregatorTemplates = subtotalAggregatorTemplates;
-    return $.pivotUtilities.subtotal_aggregators = (function(tpl, sTpl) {
+    return $.pivotUtilities.subtotal_aggregators = (function (tpl, sTpl) {
       return {
         "Sum As Fraction Of Parent Row": sTpl.fractionOf(tpl.sum(), "row", usFmtPct),
         "Sum As Fraction Of Parent Column": sTpl.fractionOf(tpl.sum(), "col", usFmtPct),

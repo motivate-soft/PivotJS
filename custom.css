@@ -129,3 +129,20 @@
     margin-left: 3px;
 }
 
+th.pvtColLabel.pvtSortable{
+    cursor:pointer !important;
+}
+
+
+th.pvtColLabel.pvtSortable.pvtSortDesc::after{
+    content: ' ↓';
+}
+
+th.pvtColLabel.pvtSortable.pvtSortAsc::after{
+    content: ' ↑';
+}
+
+
+
+
+
