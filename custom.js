@@ -119,6 +119,7 @@
 
         //column sort logic
         if (this.input[this.input.length - 1] === record && sortInfo.colIndex >= 0 && sortInfo.direction != 0) {
+          
           var f = [], d, a = sortInfo.direction, c = sortInfo.colIndex;
           b = this;
           b.sorted = !1;
@@ -128,24 +129,24 @@
             sortInfo.colIndex = -1;
             sortInfo.direction = 0;
             sortInfo.colKey = null;
-            return;
+          }else{
+            for (d in h) {
+              var p = h[d];
+              var n = null != c ? e[c] : [];
+              n = b.getAggregator(p, n);
+              f.push({
+                val: n.value(),
+                key: p
+              })
+            }
+            f.sort(function (b, c) {
+              return a * $.pivotUtilities.naturalSort(b.val, c.val)
+            });
+            b.rowKeys = [];
+            for (d = 0; d < f.length; d++)
+              b.rowKeys.push(f[d].key);
+            b.sorted = !0
           }
-          for (d in h) {
-            var p = h[d];
-            var n = null != c ? e[c] : [];
-            n = b.getAggregator(p, n);
-            f.push({
-              val: n.value(),
-              key: p
-            })
-          }
-          f.sort(function (b, c) {
-            return a * $.pivotUtilities.naturalSort(b.val, c.val)
-          });
-          b.rowKeys = [];
-          for (d = 0; d < f.length; d++)
-            b.rowKeys.push(f[d].key);
-          b.sorted = !0
         }
 
         return results;
@@ -463,8 +464,9 @@
 
           b = pivotData;
           h.th.onclick = function (event) {
-            curPage = curPageGroup = 0;
+            curPage = 1;
             sortInfo.colIndex = $(this).attr('key-index');
+            
             if (sortInfo.colIndex < 0) {
               return;
             }
@@ -477,6 +479,7 @@
             } else {
               sortInfo.direction = -1;
             }
+            
             refresh();
           };
         }
@@ -1094,7 +1097,6 @@
         if (curPage > totalPage) {
           curPage = 1;
         }
-        console.log(totalPage);
 
         var pageNumArray = [];
         // -1 means (...)
