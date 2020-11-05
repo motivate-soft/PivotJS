@@ -4,9 +4,10 @@
     hasProp = {}.hasOwnProperty,
     slice = [].slice;
 
-  var rowsPerPage = 10;
+  var rowsPerPage = 20;
   var curPage = 1;
   var globalSearchValue = "";
+  var globalSearchKey = "";
   var sortInfo = {
     colIndex: -1,
     colKey: '',
@@ -103,49 +104,83 @@
           }).call(this));
         }
 
+
         //global search logic
         const value = this.tree[flatRowKey][flatColKey].value();
 
         if (this._rowKeys == undefined) {
           this._rowKeys = {};
         }
-        if (globalSearchValue == "" || value == globalSearchValue) {
-          if (!this._rowKeys[flatRowKey]) {
+
+        if (this._colKeys == undefined) {
+          this._colKeys = {};
+        }
+
+        if (globalSearchValue != "") {
+          if (value == globalSearchValue && !this._rowKeys[flatRowKey]) {
             this._rowKeys[flatRowKey] = rowKey;
           }
         }
-        this.rowKeys = Object.values(this._rowKeys);
 
+        if (globalSearchKey != "" && flatColKey.toLowerCase().indexOf(globalSearchKey) != -1 && !this._colKeys[flatColKey]) {
+            this._colKeys[flatColKey] = colKey;
+        }
 
-        //column sort logic
-        if (this.input[this.input.length - 1] === record && sortInfo.colIndex >= 0 && sortInfo.direction != 0) {
-          
-          var f = [], d, a = sortInfo.direction, c = sortInfo.colIndex;
-          b = this;
-          b.sorted = !1;
-          var h = b.getRowKeys()
-            , e = b.getColKeys();
-          if(sortInfo.colKey !== JSON.stringify(e[c])){
-            sortInfo.colIndex = -1;
-            sortInfo.direction = 0;
-            sortInfo.colKey = null;
-          }else{
-            for (d in h) {
-              var p = h[d];
-              var n = null != c ? e[c] : [];
-              n = b.getAggregator(p, n);
-              f.push({
-                val: n.value(),
-                key: p
-              })
+        if (globalSearchKey != "" && flatRowKey.toLowerCase().indexOf(globalSearchKey) != -1 && !this._rowKeys[flatRowKey]) {
+            this._rowKeys[flatRowKey] = rowKey;
+        }
+        
+        //for last record update rowKeys and colKeys
+        if (this.input[this.input.length - 1] === record) {
+          console.log(globalSearchKey);
+          if (globalSearchKey != "") {
+            rowLen = Object.keys(this._rowKeys).length;
+            colLen = Object.keys(this._colKeys).length;
+            if (rowLen == 0 && colLen == 0) {
+              this.rowKeys = [];
+              this.colKey = [];
+            } else {
+              if (rowLen) {
+                this.rowKeys = Object.values(this._rowKeys);
+              }
+              if (colLen) {
+                this.colKeys = Object.values(this._colKeys);
+              }
             }
-            f.sort(function (b, c) {
-              return a * $.pivotUtilities.naturalSort(b.val, c.val)
-            });
-            b.rowKeys = [];
-            for (d = 0; d < f.length; d++)
-              b.rowKeys.push(f[d].key);
-            b.sorted = !0
+          }else if(globalSearchValue != ""){
+            this.rowKeys = Object.values(this._rowKeys);
+          }
+
+
+          //column sort logic
+          if (sortInfo.colIndex >= 0 && sortInfo.direction != 0) {
+            var f = [], d, a = sortInfo.direction, c = sortInfo.colIndex;
+            b = this;
+            b.sorted = !1;
+            var h = b.getRowKeys()
+              , e = b.getColKeys();
+            if (sortInfo.colKey !== JSON.stringify(e[c])) {
+              sortInfo.colIndex = -1;
+              sortInfo.direction = 0;
+              sortInfo.colKey = null;
+            } else {
+              for (d in h) {
+                var p = h[d];
+                var n = null != c ? e[c] : [];
+                n = b.getAggregator(p, n);
+                f.push({
+                  val: n.value(),
+                  key: p
+                })
+              }
+              f.sort(function (b, c) {
+                return a * $.pivotUtilities.naturalSort(b.val, c.val)
+              });
+              b.rowKeys = [];
+              for (d = 0; d < f.length; d++)
+                b.rowKeys.push(f[d].key);
+              b.sorted = !0
+            }
           }
         }
 
@@ -160,7 +195,7 @@
 
 
     SubtotalRenderer = function (pivotData, opts) {
-      var addClass, adjustAxisHeader, allTotal, arrowCollapsed, arrowExpanded, buildAxisHeader, buildColAxisHeaders, buildColHeader, buildColTotals, buildColTotalsHeader, buildGrandTotal, buildRowAxisHeaders, buildRowHeader, buildRowTotalsHeader, buildValues, classColCollapsed, classColExpanded, classColHide, classColShow, classCollapsed, classExpanded, classRowCollapsed, classRowExpanded, classRowHide, classRowShow, clickStatusCollapsed, clickStatusExpanded, colAttrs, colKeys, colTotals, collapseAxis, collapseAxisHeaders, collapseChildCol, collapseChildRow, collapseCol, collapseHiddenColSubtotal, collapseRow, collapseShowColSubtotal, collapseShowRowSubtotal, createElement, defaults, expandAxis, expandChildCol, expandChildRow, expandCol, expandHideColSubtotal, expandHideRowSubtotal, expandRow, expandShowColSubtotal, expandShowRowSubtotal, getHeaderText, getTableEventHandlers, hasClass, hideChildCol, hideChildRow, main, processKeys, removeClass, replaceClass, rowAttrs, rowKeys, rowTotals, setAttributes, showChildCol, showChildRow, tree;
+      var setTextContent, addClass, adjustAxisHeader, allTotal, arrowCollapsed, arrowExpanded, buildAxisHeader, buildColAxisHeaders, buildColHeader, buildColTotals, buildColTotalsHeader, buildGrandTotal, buildRowAxisHeaders, buildRowHeader, buildRowTotalsHeader, buildValues, classColCollapsed, classColExpanded, classColHide, classColShow, classCollapsed, classExpanded, classRowCollapsed, classRowExpanded, classRowHide, classRowShow, clickStatusCollapsed, clickStatusExpanded, colAttrs, colKeys, colTotals, collapseAxis, collapseAxisHeaders, collapseChildCol, collapseChildRow, collapseCol, collapseHiddenColSubtotal, collapseRow, collapseShowColSubtotal, collapseShowRowSubtotal, createElement, defaults, expandAxis, expandChildCol, expandChildRow, expandCol, expandHideColSubtotal, expandHideRowSubtotal, expandRow, expandShowColSubtotal, expandShowRowSubtotal, getHeaderText, getTableEventHandlers, hasClass, hideChildCol, hideChildRow, main, processKeys, removeClass, replaceClass, rowAttrs, rowKeys, rowTotals, setAttributes, showChildCol, showChildRow, tree;
       defaults = {
         table: {
           clickCallback: null
@@ -231,6 +266,16 @@
       classColCollapsed = "colcollapsed";
       arrowExpanded = opts.arrowExpanded;
       arrowCollapsed = opts.arrowCollapsed;
+
+      setTextContent = function (element, text) {
+        try {
+          var contentEle = element.getElementsByClassName("pvtFixedHeader")[0];
+          contentEle.textContent = text;
+        } catch (e) {
+          console.log("empty");
+        }
+      };
+
       hasClass = function (element, className) {
         var regExp;
         regExp = new RegExp("(?:^|\\s)" + className + "(?!\\S)", "g");
@@ -458,7 +503,7 @@
           h.th.rowSpan = 2;
           h.th.setAttribute("key-index", h.row);
           addClass(h.th, "pvtSortable");
-          if(h.row == sortInfo.colIndex && JSON.stringify(colKeys[h.row]) === sortInfo.colKey){
+          if (h.row == sortInfo.colIndex && JSON.stringify(colKeys[h.row]) === sortInfo.colKey) {
             addClass(h.th, sortInfo.direction == -1 ? "pvtSortDesc" : sortInfo.direction == 1 ? "pvtSortAsc" : "");
           }
 
@@ -466,12 +511,12 @@
           h.th.onclick = function (event) {
             curPage = 1;
             sortInfo.colIndex = $(this).attr('key-index');
-            
+
             if (sortInfo.colIndex < 0) {
               return;
             }
             sortInfo.colKey = JSON.stringify(colKeys[sortInfo.colIndex]);
-            
+
             if (hasClass(this, "pvtSortDesc")) {
               sortInfo.direction = 1;
             } else if (hasClass(this, "pvtSortAsc")) {
@@ -479,10 +524,11 @@
             } else {
               sortInfo.direction = -1;
             }
-            
+
             refresh();
           };
         }
+
         h.th.textContent = getHeaderText(h, colAttrs, opts.colSubtotalDisplay);
         if (h.children.length !== 0 && h.col < opts.colSubtotalDisplay.disableFrom) {
           ah.expandables++;
@@ -536,6 +582,8 @@
         }
         addClass(h.th, classRowShow + " row" + h.row + " rowcol" + h.col + " " + classRowExpanded);
         h.th.setAttribute("data-rownode", h.node);
+
+
         if (h.col === rowAttrs.length - 1 && colAttrs.length !== 0) {
           h.th.colSpan = 2;
         }
@@ -543,6 +591,9 @@
           h.th.rowSpan = h.childrenSpan;
         }
         h.th.textContent = getHeaderText(h, rowAttrs, opts.rowSubtotalDisplay);
+        // var content = createElement("div", "pvtContent");
+        // h.th.appendChild(content);
+
         h.tr = createElement("tr", "row" + h.row);
         h.tr.appendChild(h.th);
         if (h.children.length === 0) {
@@ -727,7 +778,9 @@
         for (i = k = ref = col, ref1 = collapsible; ref <= ref1 ? k <= ref1 : k >= ref1; i = ref <= ref1 ? ++k : --k) {
           ah = axisHeaders.ah[i];
           replaceClass(ah.th, classExpanded, classCollapsed);
-          ah.th.textContent = " " + arrowCollapsed + " " + ah.text;
+          // ah.th.textContent = " " + arrowCollapsed +arrowCollapsed + " " + ah.text;
+          setTextContent(ah.th, " " + arrowCollapsed + " " + ah.text);
+
           ah.clickStatus = clickStatusCollapsed;
           results.push(ah.onClick = expandAxis);
         }
@@ -740,7 +793,8 @@
           return collapseAxisHeaders(axisHeaders, col, opts);
         } else if (ah.expandedCount === ah.expandables) {
           replaceClass(ah.th, classCollapsed, classExpanded);
-          ah.th.textContent = " " + arrowExpanded + " " + ah.text;
+          // ah.th.textContent = " " + arrowExpanded + " " + ah.text;
+          setTextContent(ah.th, " " + arrowExpanded + " " + ah.text);
           ah.clickStatus = clickStatusExpanded;
           return ah.onClick = collapseAxis;
         }
@@ -806,12 +860,14 @@
       expandHideColSubtotal = function (h) {
         $(h.th).closest('table.pvtTable').find("tbody tr td[data-colnode=\"" + h.node + "\"], th[data-colnode=\"" + h.node + "\"]").removeClass(classColCollapsed + " " + classColShow).addClass(classColExpanded + " " + classColHide);
         replaceClass(h.th, classColHide, classColShow);
-        return h.th.textContent = " " + arrowExpanded + " " + h.text;
+        // return h.th.textContent = " " + arrowExpanded + " " + h.text;
+        return setTextContent(h.th, " " + arrowExpanded + " " + h.text);
       };
       expandShowColSubtotal = function (h) {
         $(h.th).closest('table.pvtTable').find("tbody tr td[data-colnode=\"" + h.node + "\"], th[data-colnode=\"" + h.node + "\"]").removeClass(classColCollapsed + " " + classColHide).addClass(classColExpanded + " " + classColShow);
         h.th.colSpan++;
-        return h.th.textContent = " " + arrowExpanded + " " + h.text;
+        // return h.th.textContent = " " + arrowExpanded + " " + h.text;
+        return setTextContent(h.th, " " + arrowExpanded + " " + h.text);
       };
       expandChildCol = function (ch, opts) {
         var chKey, k, len, ref, results;
@@ -885,7 +941,12 @@
       };
       collapseShowRowSubtotal = function (h, opts) {
         var cell, k, l, len, len1, ref, ref1, results;
-        h.th.textContent = " " + arrowCollapsed + " " + h.text;
+        // h.th.textContent = " " + arrowCollapsed + " " + h.text;
+        setTextContent(h.th, " " + arrowCollapsed + " " + h.text);
+
+        var content = h.th.getElementsByClassName("pvtFixedHeader")[0];
+        content.style.height = h.th.parentElement.clientHeight + "px";
+
         ref = h.tr.querySelectorAll("th, td");
         for (k = 0, len = ref.length; k < len; k++) {
           cell = ref[k];
@@ -944,7 +1005,11 @@
       };
       expandShowRowSubtotal = function (h, opts) {
         var cell, k, l, len, len1, ref, ref1, results;
-        h.th.textContent = " " + arrowExpanded + " " + h.text;
+        // h.th.textContent = " " + arrowExpanded + " " + h.text;
+        setTextContent(h.th, " " + arrowExpanded + " " + h.text);
+        var content = h.th.getElementsByClassName("pvtFixedHeader")[0];
+        content.style.height = content.getAttribute("origin-height");
+
         ref = h.tr.querySelectorAll("th, td");
         for (k = 0, len = ref.length; k < len; k++) {
           cell = ref[k];
@@ -964,7 +1029,9 @@
       };
       expandHideRowSubtotal = function (h, opts) {
         var cell, k, l, len, len1, ref, ref1, results;
-        h.th.textContent = " " + arrowExpanded + " " + h.text;
+        // h.th.textContent = " " + arrowExpanded + " " + h.text;
+        setTextContent(h.th, " " + arrowExpanded + " " + h.text);
+
         ref = h.tr.querySelectorAll("th, td");
         for (k = 0, len = ref.length; k < len; k++) {
           cell = ref[k];
@@ -1075,24 +1142,37 @@
 
         //add search elements
         searchSection = createElement("div", "pvtTableSearchSection");
-        searchSection.appendChild(createElement("span", "", "Search:"));
+        searchSection.appendChild(createElement("span", "", "Value Search:"));
         searchInput = createElement("input", "searchInput", globalSearchValue);
         searchInput.value = globalSearchValue;
         searchInput.onchange = function (event) {
           globalSearchValue = this.value;
+          globalSearchKey = "";
           refresh();
         }
         searchSection.appendChild(searchInput);
 
+        searchSection.appendChild(createElement("span", "", "Key Search:", {
+          'style': "margin-left: 20px"
+        }));
+        searchInput1 = createElement("input", "searchInput", globalSearchKey);
+        searchInput1.value = globalSearchKey;
+        searchInput1.onchange = function (event) {
+          globalSearchKey = this.value.toLowerCase();
+          globalSearchValue = "";
+          refresh();
+        }
+        searchSection.appendChild(searchInput1);
+
         //add pagination elements
         paginateSection = createElement("div", "pvtTablePageSection");
         paginateBtnWrapper = createElement("span");
-        
+
         paginatePrevBtn = createElement("a", "paginate_button", "Prev");
         paginateBtnWrapper.appendChild(paginatePrevBtn);
 
         const totalPage = Math.ceil(pivotData.rowKeys.length / rowsPerPage);
-        
+
 
         if (curPage > totalPage) {
           curPage = 1;
@@ -1100,44 +1180,44 @@
 
         var pageNumArray = [];
         // -1 means (...)
-        if(totalPage >= 14){
-          if(curPage >= 8 && curPage <= totalPage - 8){
-              pageNumArray = [1, 2, -1];
-              for(var i = curPage - 3; i < curPage + 4; i++){
-                pageNumArray.push(i);
-              }
-              pageNumArray = pageNumArray.concat([-1, totalPage - 1, totalPage]);
-          }else if(curPage < 8){
-              pageNumArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, -1, totalPage - 1, totalPage];
-          }else{
-              pageNumArray = [1, 2, -1];
-              for(var i = totalPage - 9; i < totalPage + 1; i++){
-                pageNumArray.push(i);
-              }
+        if (totalPage >= 14) {
+          if (curPage >= 8 && curPage <= totalPage - 8) {
+            pageNumArray = [1, 2, -1];
+            for (var i = curPage - 3; i < curPage + 4; i++) {
+              pageNumArray.push(i);
+            }
+            pageNumArray = pageNumArray.concat([-1, totalPage - 1, totalPage]);
+          } else if (curPage < 8) {
+            pageNumArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, -1, totalPage - 1, totalPage];
+          } else {
+            pageNumArray = [1, 2, -1];
+            for (var i = totalPage - 9; i < totalPage + 1; i++) {
+              pageNumArray.push(i);
+            }
           }
-        }else{
-          for(var i = 1; i < totalPage + 1; i++){
+        } else {
+          for (var i = 1; i < totalPage + 1; i++) {
             pageNumArray.push(i);
           }
         }
 
-        for(var i = 0; i < pageNumArray.length; i++){
+        for (var i = 0; i < pageNumArray.length; i++) {
           var paginateItem;
-          if(pageNumArray[i] === -1){
-              paginateItem = createElement("span", "paginate_more", "...");
-          }else{
+          if (pageNumArray[i] === -1) {
+            paginateItem = createElement("span", "paginate_more", "...");
+          } else {
             paginateItem = createElement("a", "paginate_button", pageNumArray[i], {
               "data-dt-idx": pageNumArray[i]
             });
             if (pageNumArray[i] == curPage) {
               addClass(paginateItem, "current");
-            }  
+            }
             paginateItem.onclick = function (event) {
-                const pageNum = Number(this.getAttribute("data-dt-idx"));
-                if(pageNum != curPage){
-                  curPage = pageNum;
-                  refresh();
-                }
+              const pageNum = Number(this.getAttribute("data-dt-idx"));
+              if (pageNum != curPage) {
+                curPage = pageNum;
+                refresh();
+              }
             };
           }
           paginateBtnWrapper.appendChild(paginateItem);
@@ -1146,15 +1226,15 @@
         paginateNextBtn = createElement("a", "paginate_button", "Next");
         paginateBtnWrapper.appendChild(paginateNextBtn);
 
-        
+
         paginatePrevBtn.onclick = function (event) {
-          if(curPage > 1){
+          if (curPage > 1) {
             curPage--;
             refresh();
           }
         }
         paginateNextBtn.onclick = function (event) {
-          if(curPage < totalPage){
+          if (curPage < totalPage) {
             curPage++;
             refresh();
           }
@@ -1177,11 +1257,12 @@
           rowKeyHeaders = processKeys(rowKeys, "pvtRowLabel");
         }
         result = createElement("table", "pvtTable", null, {
-          style: "display: none;"
+          style: "display: none;",
+          id: "pvtTable"
         });
         thead = createElement("thead");
         result.appendChild(thead);
-        if (colAttrs.length !== 0) {
+        if (colAttrs.length !== 0 && colKeys.length !== 0) {
           colAxisHeaders = buildColAxisHeaders(thead, rowAttrs, colAttrs, opts);
           node = {
             counter: 0
@@ -1228,12 +1309,13 @@
         //append all children to container
         container.appendChild(searchSection);
         pivotTableWrapper = createElement("div", "pvtTableWrapper");
-        pivotTableWrapper.appendChild(result);
-        container.appendChild(pivotTableWrapper);
-        if (rowKeys.length > 0) {
+        if (rowKeys.length != 0 && colKeys.length != 0) {
+          pivotTableWrapper.appendChild(result);
+          container.appendChild(pivotTableWrapper);
           container.appendChild(paginateSection);
+        } else {
+          container.appendChild(createElement("h2", "alert-no-data", "No Data"));
         }
-
 
         return container;
       };
@@ -1248,7 +1330,7 @@
       }
       return main(rowAttrs, rowKeys, colAttrs, colKeys);
 
-     
+
     };
     $.pivotUtilities.custom_renderers = {
       "Table With Subtotal": function (pvtData, opts) {
@@ -1323,6 +1405,233 @@
       };
     })(aggregatorTemplates, subtotalAggregatorTemplates);
   });
+
+  function PivotTableWrapper(b, c, a, f, d, h, e) {
+    this.$containerElem = b;
+    this.$t = c;
+    this.fixedByTop = [];
+    this.fixedByLeft = [];
+    this.smooth = a;
+    this.rowHdrEnabled = f;
+    this.colHdrEnabled = d;
+    this.disableByAreaFactor = h;
+    this.useSticky = e;
+    "boolean" !== typeof e && (b = document.createElement("div"),
+      b.style.position = "sticky",
+      this.useSticky = 0 <= b.style.position.indexOf("sticky"));
+    this.init()
+  }
+  var g = jQuery;
+
+  PivotTableWrapper.prototype.buildFixedHeaders = function (b) {
+    function c(a) {
+      return {
+        height: a.clientHeight,
+        width: a.clientWidth,
+        top: a.offsetTop,
+        left: a.offsetLeft
+      }
+    }
+    function a(a) {
+      a = a.getBoundingClientRect();
+      return {
+        height: a.height,
+        width: a.width,
+        top: a.top,
+        left: a.left
+      }
+    }
+    var f = this.$containerElem
+      , d = this.$t
+      , h = []
+      , e = this.fixedByTop = []
+      , g = this.fixedByLeft = []
+      , n = this.rowHdrEnabled
+      , t = this.colHdrEnabled;
+    f.addClass("pvtFixedHeaderOuterContainer");
+    d.addClass("pvtFixedHeader");
+    0 < d.find("th.pvtTotalLabel").length && d.addClass("pvtHasTotalsLastColumn");
+    for (var u = d[0].getElementsByTagName("TH"), k = 0; k < u.length; k++) {
+      var m = u[k]
+        , l = 0 <= m.className.indexOf("pvtAxisLabel")
+        , q = 0 <= m.className.indexOf("pvtTotalLabel")
+        , r = !l && (0 <= m.className.indexOf("pvtColLabel") || q && 0 < k && 0 <= u[k - 1].className.indexOf("pvtColLabel"));
+      q = !l && (0 <= m.className.indexOf("pvtRowLabel") || q && 0 < k && 0 <= u[k - 1].className.indexOf("pvtRowLabel"));
+      l = {
+        th: m,
+        isCol: r,
+        isRow: q
+      };
+      r || (l.fixedLeft = !0);
+      q || (l.fixedTop = !0);
+      r = null;
+      if (1 == m.childNodes.length && "DIV" == m.childNodes[0].tagName)
+        r = m.childNodes[0],
+          r.className = "pvtFixedHeader";
+      else {
+        r = document.createElement("div");
+        r.className = "pvtFixedHeader";
+        (l.isCol || l.isRow) && r.setAttribute("title", m.textContent);
+        if (0 < m.childNodes.length)
+          for (; 0 < m.childNodes.length;)
+            r.appendChild(m.childNodes[0]);
+        else
+          r.textContent = m.textContent;
+        m.appendChild(r)
+      }
+      l.el = r;
+      h.push(l)
+    }
+    u = f[0].getBoundingClientRect ? a : c;
+    if (this.useSticky) {
+      e = u(d[0]);
+      for (k = h.length - 1; 0 <= k; k--)
+        l = h[k],
+          d = u(l.th),
+          l.offsetTop = d.top - e.top,
+          l.offsetLeft = d.left - e.left,
+          l.width = d.width,
+          l.height = d.height;
+      k = function () {
+        for (var a = 0; a < h.length; a++) {
+          var b = h[a];
+          b.el.style.height = b.height + "px";
+          b.el.style.width = b.width + "px";
+          b.el.setAttribute("origin-height", b.el.style.height);
+          t && b.fixedTop && (b.th.style.top = b.offsetTop + "px");
+          n && b.fixedLeft && (b.th.style.left = b.offsetLeft + "px")
+        }
+        f.addClass("pvtStickyFixedHeader");
+        -1 !== navigator.userAgent.indexOf("Chrome") && f.addClass("pvtStickyChromeFixedHeader")
+      }
+        ;
+      window.requestAnimationFrame && !b ? window.requestAnimationFrame(k) : k()
+    } else {
+      for (k = h.length - 1; 0 <= k; k--)
+        l = h[k],
+          d = u(l.th),
+          l.height = d.height,
+          t && l.fixedTop && e.push({
+            el: l.el,
+            th: l.th,
+            top: 0,
+            lastTop: 0
+          }),
+          n && l.fixedLeft && g.push({
+            el: l.el,
+            th: l.th,
+            left: 0,
+            lastLeft: 0
+          });
+      k = function () {
+        for (var a = 0; a < h.length; a++) {
+          var b = h[a];
+          b.el.style.height = b.height + "px"
+        }
+      }
+        ;
+      window.requestAnimationFrame && !b ? window.requestAnimationFrame(k) : k()
+    }
+  };
+
+  PivotTableWrapper.prototype.refreshHeaders = function (b, c) {
+    var a = this.fixedByLeft
+      , f = this.fixedByTop
+      , d = function () {
+        for (var d, e, g = 0; g < a.length; g++)
+          e = a[g],
+            d = c + e.left,
+            d != e.lastLeft && (e.lastLeft = d,
+              e.el.style.left = d + "px");
+        for (g = 0; g < f.length; g++)
+          e = f[g],
+            d = b + e.top,
+            d != e.lastTop && (e.lastTop = d,
+              e.el.style.top = d + "px")
+      };
+    window.requestAnimationFrame ? window.requestAnimationFrame(d) : d()
+  };
+
+  PivotTableWrapper.prototype.destroy = function () {
+    this.$containerElem.off("scroll wheel");
+    this.resizeHandler && g(window).off("resize", this.resizeHandler);
+    this.$t = this.$containerElem = this.fixedByLeft = this.fixedByTop = null
+  };
+
+  PivotTableWrapper.prototype.refresh = function () {
+    var b = this;
+    b.$t.find("div.pvtFixedHeader").each(function () {
+      this.style.height = "auto";
+      b.useSticky || (this.style.top = "0px",
+        this.style.left = "0px")
+    });
+    b.$containerElem.removeClass("pvtStickyFixedHeader");
+    b.buildFixedHeaders(!0);
+    this.useSticky || b.refreshHeaders(b.$containerElem[0].scrollTop, b.$containerElem[0].scrollLeft)
+  };
+
+  PivotTableWrapper.prototype.init = function () {
+    this.buildFixedHeaders();
+    var b = this;
+    if (!this.useSticky) {
+      var c = this.$containerElem[0]
+        , a = null
+        , f = -1
+        , d = -1
+        , h = this.smooth ? b.refreshHeaders : function (c, d) {
+          a && clearTimeout(a);
+          this.$containerElem.addClass("pvtFixedHeadersOutdated");
+          a = setTimeout(function () {
+            a = null;
+            b.$containerElem.removeClass("pvtFixedHeadersOutdated");
+            b.refreshHeaders(c, d)
+          }, 300)
+        }
+        ;
+      this.$containerElem.on("scroll", function (a) {
+        a = c.scrollTop;
+        var e = c.scrollLeft;
+        if (a != f || e != d)
+          f = a,
+            d = e,
+            h.call(b, a, e)
+      });
+      this.$containerElem.scroll()
+    }
+    var e = this.$containerElem[0].clientWidth;
+    this.resizeHandler = function () {
+      var a = b.$containerElem[0].clientWidth;
+      e != a && (e = a,
+        a = function () {
+          b.refresh()
+        }
+        ,
+        window.requestAnimationFrame ? window.requestAnimationFrame(a) : a())
+    }
+      ;
+    g(window).on("resize", this.resizeHandler)
+  };
+
+  window.PivotTableExtensions = function (b) {
+    this.options = g.extend({}, PivotTableExtensions.defaults, b)
+  };
+
+  window.PivotTableExtensions.prototype.initFixedHeaders = function (b, c, a) {
+    0 != b.length && (c = c ? b.closest(".pvtFixedHeaderOuterContainer") : b.parent(),
+      a = "object" === typeof a ? a : {},
+      this.fixedHeaders && this.fixedHeaders.destroy(),
+      this.fixedHeaders = new PivotTableWrapper(c, b, !0 === a.smooth ? !0 : !1, !1 === a.rows ? !1 : !0, !1 === a.columns ? !1 : !0, a.disableByAreaFactor ? a.disableByAreaFactor : .5, !1 === a.useSticky ? !1 : !0))
+  };
+
+  window.PivotTableExtensions.defaults = {
+    drillDownHandler: null,
+    wrapWith: null,
+    onSortHandler: function (b) { },
+    sortByLabelEnabled: !0,
+    sortByColumnsEnabled: !0,
+    sortByRowsEnabled: !0,
+    fixedHeaders: !1
+  }
 
 }).call(this);
 
