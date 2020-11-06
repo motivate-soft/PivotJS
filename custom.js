@@ -1174,6 +1174,16 @@
         paginateSection = createElement("div", "pvtTablePageSection");
         paginateBtnWrapper = createElement("span");
 
+        paginateFirstBtn = createElement("a", "paginate_button", "First");
+        paginateBtnWrapper.appendChild(paginateFirstBtn);
+
+        paginateFirstBtn.onclick = function (event) {
+          if (curPage != 1) {
+            curPage = 1;
+            refresh();
+          }
+        }
+        
         paginatePrevBtn = createElement("a", "paginate_button", "Prev");
         paginateBtnWrapper.appendChild(paginatePrevBtn);
 
@@ -1232,7 +1242,6 @@
         paginateNextBtn = createElement("a", "paginate_button", "Next");
         paginateBtnWrapper.appendChild(paginateNextBtn);
 
-
         paginatePrevBtn.onclick = function (event) {
           if (curPage > 1) {
             curPage--;
@@ -1242,6 +1251,16 @@
         paginateNextBtn.onclick = function (event) {
           if (curPage < totalPage) {
             curPage++;
+            refresh();
+          }
+        }
+
+        paginateLastBtn = createElement("a", "paginate_button", "Last");
+        paginateBtnWrapper.appendChild(paginateLastBtn);
+
+        paginateLastBtn.onclick = function (event) {
+          if (curPage != totalPage) {
+            curPage = totalPage;
             refresh();
           }
         }
