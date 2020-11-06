@@ -132,7 +132,7 @@
         
         //for last record update rowKeys and colKeys
         if (this.input[this.input.length - 1] === record) {
-          console.log(globalSearchKey);
+          console.log(this);
           if (globalSearchKey != "") {
             rowLen = Object.keys(this._rowKeys).length;
             colLen = Object.keys(this._colKeys).length;
@@ -1142,8 +1142,11 @@
 
         //add search elements
         searchSection = createElement("div", "pvtTableSearchSection");
-        searchSection.appendChild(createElement("span", "", "Value Search:"));
-        searchInput = createElement("input", "searchInput", globalSearchValue);
+        searchSection.appendChild(createElement("span", "", "Value "));
+        searchSection.appendChild(createElement("i", "fa fa-search"));
+        searchInput = createElement("input", "searchInput", globalSearchValue, {
+          type: "search"
+        });
         searchInput.value = globalSearchValue;
         searchInput.onchange = function (event) {
           globalSearchValue = this.value;
@@ -1152,10 +1155,13 @@
         }
         searchSection.appendChild(searchInput);
 
-        searchSection.appendChild(createElement("span", "", "Key Search:", {
+        searchSection.appendChild(createElement("span", "", "Key ", {
           'style': "margin-left: 20px"
         }));
-        searchInput1 = createElement("input", "searchInput", globalSearchKey);
+        searchSection.appendChild(createElement("i", "fa fa-search"));
+        searchInput1 = createElement("input", "searchInput", globalSearchKey, {
+          type: "search"
+        });
         searchInput1.value = globalSearchKey;
         searchInput1.onchange = function (event) {
           globalSearchKey = this.value.toLowerCase();
