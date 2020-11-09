@@ -1643,15 +1643,21 @@
   };
 
   window.PivotTableExtensions.prototype.initFixedHeaders = function (b, c, a) {
+    
     0 != b.length && (c = c ? b.closest(".pvtFixedHeaderOuterContainer") : b.parent(),
       a = "object" === typeof a ? a : {},
       this.fixedHeaders && this.fixedHeaders.destroy(),
       this.fixedHeaders = new PivotTableWrapper(c, b, !0 === a.smooth ? !0 : !1, !1 === a.rows ? !1 : !0, !1 === a.columns ? !1 : !0, a.disableByAreaFactor ? a.disableByAreaFactor : .5, !1 === a.useSticky ? !1 : !0));
       
-      
-      setTimeout(function(){
-        $("th[root-node='1']:first").click();
-      }, 1);
+      if(globalSearchKey == ""){
+        b.css('opacity', '0.1');
+        setTimeout(function(){
+          b.css('opacity', '1');
+          $("th[root-node='1']:first").click();
+
+        }, 50);    
+      }
+    
       
   };
 
