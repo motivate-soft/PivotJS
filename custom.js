@@ -425,6 +425,7 @@
         }
         ah.th = createElement("th", "pvtAxisLabel " + hClass, "" + arrow + ah.text);
         if (col < attrs.length - 1 && col < opts.disableFrom && !opts.disableExpandCollapse) {
+          ah.th.setAttribute('root-node', '1');
           ah.th.onclick = function (event) {
             event = event || window.event;
             return ah.onClick(axisHeaders, col, attrs, opts);
@@ -1321,8 +1322,8 @@
           buildColTotals(tr, colAttrHeaders, rowAttrs, colAttrs, opts);
         }
         buildGrandTotal(tbody, tr, rowAttrs, colAttrs, opts);
-        collapseAxis(colAxisHeaders, opts.colSubtotalDisplay.collapseAt, colAttrs, opts.colSubtotalDisplay);
-        collapseAxis(rowAxisHeaders, opts.rowSubtotalDisplay.collapseAt, rowAttrs, opts.rowSubtotalDisplay);
+        // collapseAxis(colAxisHeaders, opts.colSubtotalDisplay.collapseAt, colAttrs, opts.colSubtotalDisplay);
+        // collapseAxis(rowAxisHeaders, opts.rowSubtotalDisplay.collapseAt, rowAttrs, opts.rowSubtotalDisplay);
         result.setAttribute("data-numrows", rowKeys.length);
         result.setAttribute("data-numcols", colKeys.length);
         result.style.display = "";
@@ -1645,7 +1646,13 @@
     0 != b.length && (c = c ? b.closest(".pvtFixedHeaderOuterContainer") : b.parent(),
       a = "object" === typeof a ? a : {},
       this.fixedHeaders && this.fixedHeaders.destroy(),
-      this.fixedHeaders = new PivotTableWrapper(c, b, !0 === a.smooth ? !0 : !1, !1 === a.rows ? !1 : !0, !1 === a.columns ? !1 : !0, a.disableByAreaFactor ? a.disableByAreaFactor : .5, !1 === a.useSticky ? !1 : !0))
+      this.fixedHeaders = new PivotTableWrapper(c, b, !0 === a.smooth ? !0 : !1, !1 === a.rows ? !1 : !0, !1 === a.columns ? !1 : !0, a.disableByAreaFactor ? a.disableByAreaFactor : .5, !1 === a.useSticky ? !1 : !0));
+      
+      
+      setTimeout(function(){
+        $("th[root-node='1']:first").click();
+      }, 1);
+      
   };
 
   window.PivotTableExtensions.defaults = {
