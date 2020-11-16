@@ -302,3 +302,56 @@ table.pvtTable{
     /* border: 1px solid #CDCDCD; */
     border-right: 1px solid #CDCDCD;
 }
+
+.pvtRowLabel > .pvtFixedHeader{
+    border-right: none !important;
+    border-bottom: none !important;
+}
+
+.pvtRowLabel.rightBorder > .pvtFixedHeader{
+    border-right: 1px solid #ddd !important;
+}
+
+.pvtRowLabel.bottomBorder > .pvtFixedHeader{
+    border-bottom: 1px solid #ddd !important;
+}
+
+.pvtRowLabel.pvtRowAxisLabel.rowcollapsed > .pvtFixedHeader{
+    border-bottom: 1px solid #ddd !important;
+}
+
+.pvtRowLabel.pvtRowAxisLabel > .pvtFixedHeader{
+    padding: 0px !important;
+
+}
+
+.pvtRowLabel.pvtRowAxisLabel.rowcollapsed > .pvtFixedHeader > .pvtLabel{
+    /* color: transparent; */
+    display: none;
+}
+
+.pvtRowLabel.pvtRowAxisLabel > .pvtFixedHeader > .pvtLabel{
+    font-size: 9px !important;
+    /* text-align: center !important; */
+    color: tomato;
+    padding-left: 10px;
+    width: 100% !important;
+    bottom: 0 !important;
+    position: absolute !important;
+}
+
+.pvtAxisLabel.hideText > .pvtFixedHeader{
+    color: transparent;
+    border-right: none !important;
+}
+
+.pvtAxisLabel.rowLabel > .pvtFixedHeader{
+    border-right: none !important;
+}
+
+
+
+
+
+
+

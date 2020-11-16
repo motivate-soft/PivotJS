@@ -211,7 +211,7 @@
           disableFrom: 99999,
           collapseAt: 99999,
           hideOnExpand: false,
-          disableExpandCollapse: false
+          disableExpandCollapse: false,
         },
         colSubtotalDisplay: {
           displayOnTop: true,
@@ -423,7 +423,10 @@
         if (col === attrs.length - 1 || col >= opts.disableFrom || opts.disableExpandCollapse) {
           arrow = "";
         }
-        ah.th = createElement("th", "pvtAxisLabel " + hClass, "" + arrow + ah.text);
+        ah.th = createElement("th", "pvtAxisLabel " + hClass + (opts.hideText ? " hideText" : ""), "" + arrow + ah.text);
+        if(opts.rowLabel){
+          addClass(ah.th, "rowLabel");
+        }
         if (col < attrs.length - 1 && col < opts.disableFrom && !opts.disableExpandCollapse) {
           ah.th.setAttribute('root-node', '1');
           ah.th.onclick = function (event) {
@@ -465,6 +468,8 @@
           tr: createElement("tr")
         };
         for (col = k = 0, ref = rowAttrs.length - 1; 0 <= ref ? k <= ref : k >= ref; col = 0 <= ref ? ++k : --k) {
+          opts.rowSubtotalDisplay.hideText = k != 0;
+          opts.rowSubtotalDisplay.rowLabel = true;
           ah = buildAxisHeader(axisHeaders, col, rowAttrs, opts.rowSubtotalDisplay);
           axisHeaders.tr.appendChild(ah.th);
         }
@@ -567,12 +572,13 @@
         });
         return tr.appendChild(th);
       };
-      buildRowHeader = function (tbody, axisHeaders, attrHeaders, h, rowAttrs, colAttrs, node, opts) {
+      buildRowHeader = function (tbody, axisHeaders, attrHeaders, h, rowAttrs, colAttrs, node, opts, bottomBorder) {
         var ah, chKey, firstChild, k, len, ref, ref1;
         ref = h.children;
+        
         for (k = 0, len = ref.length; k < len; k++) {
           chKey = ref[k];
-          buildRowHeader(tbody, axisHeaders, attrHeaders, h[chKey], rowAttrs, colAttrs, node, opts);
+          buildRowHeader(tbody, axisHeaders, attrHeaders, h[chKey], rowAttrs, colAttrs, node, opts, bottomBorder && k == len - 1);
         }
         ah = axisHeaders.ah[h.col];
         ah.attrHeaders.push(h);
@@ -582,6 +588,14 @@
           firstChild = h[h.children[0]];
         }
         addClass(h.th, classRowShow + " row" + h.row + " rowcol" + h.col + " " + classRowExpanded);
+        //-----------------------------
+        if(len == 0){
+          addClass(h.th, "rightBorder");
+        }
+        if(bottomBorder){
+          addClass(h.th, "bottomBorder");
+        }
+        //-----------------------------
         h.th.setAttribute("data-rownode", h.node);
 
 
@@ -611,14 +625,30 @@
               return h.onClick(axisHeaders, h, opts.rowSubtotalDisplay);
             };
           }
-          h.sTh = createElement("th", "pvtRowLabel row" + h.row + " rowcol" + h.col + " " + classRowExpanded + " " + classRowShow);
+          h.sTh = createElement("th", "pvtRowLabel pvtRowAxisLabel row" + h.row + " rowcol" + h.col + " " + classRowExpanded + " " + classRowShow);
+          
           if (opts.rowSubtotalDisplay.hideOnExpand) {
             replaceClass(h.sTh, classRowShow, classRowHide);
           }
           h.sTh.setAttribute("data-rownode", h.node);
-          h.sTh.colSpan = rowAttrs.length - (h.col + 1) + (colAttrs.length !== 0 ? 1 : 0);
+          h.sTh.colSpan = (rowAttrs.length - (h.col + 1) + (colAttrs.length !== 0 ? 1 : 0));
           if (opts.rowSubtotalDisplay.displayOnTop) {
-            h.tr.appendChild(h.sTh);
+            console.log(h.sTh);
+            for(k = 1, len = rowAttrs.length; k < len; k++){
+              var axisLabel = createElement("th", "pvtRowLabel pvtRowAxisLabel row" + h.row + " rowcol" + h.col + " " + classRowExpanded + " " + classRowShow);
+              var text = createElement("span", "pvtLabel", rowAttrs[k]);
+              axisLabel.appendChild(text);
+              if (opts.rowSubtotalDisplay.hideOnExpand) {
+                replaceClass(axisLabel, classRowShow, classRowHide);
+              }
+              if(k == len - 1){
+                addClass(axisLabel, "rightBorder");
+              }
+              axisLabel.setAttribute("data-rownode", h.node);
+              axisLabel.colSpan = (k == len - 1 ? 2 : 1);
+              h.tr.appendChild(axisLabel);
+            }
+            // h.tr.appendChild(h.sTh);            
           } else {
             h.th.rowSpan += 1;
             h.sTr = createElement("tr", "row" + h.row);
@@ -1313,7 +1343,7 @@
           ref1 = rowKeyHeaders.children;
           for (l = 0, len1 = ref1.length; l < len1; l++) {
             chKey = ref1[l];
-            buildRowHeader(tbody, rowAxisHeaders, rowAttrHeaders, rowKeyHeaders[chKey], rowAttrs, colAttrs, node, opts);
+            buildRowHeader(tbody, rowAxisHeaders, rowAttrHeaders, rowKeyHeaders[chKey], rowAttrs, colAttrs, node, opts, true);
           }
         }
         buildValues(tbody, colAttrHeaders, rowAttrHeaders, rowAttrs, colAttrs, opts);
